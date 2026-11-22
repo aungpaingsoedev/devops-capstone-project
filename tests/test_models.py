@@ -6,7 +6,7 @@ import logging
 import unittest
 import os
 from service import app
-from service.models import Account, DataValidationError, db
+from service.models import Account, DataValidationError, PersistentBase, db
 from tests.factories import AccountFactory
 
 DATABASE_URI = os.getenv(
@@ -64,6 +64,16 @@ class TestAccount(unittest.TestCase):
         self.assertEqual(account.address, fake_account.address)
         self.assertEqual(account.phone_number, fake_account.phone_number)
         self.assertEqual(account.date_joined, fake_account.date_joined)
+
+    def test_persistent_base_initializes_without_an_id(self):
+        """It should initialize a persistent object without an id"""
+        persistent = PersistentBase()
+        self.assertIsNone(persistent.id)
+
+    def test_account_representation(self):
+        """It should provide a useful string representation"""
+        account = Account(name="Test Account")
+        self.assertIn("Test Account", repr(account))
 
     def test_add_a_account(self):
         """It should Create an account and add it to the database"""
@@ -165,6 +175,19 @@ class TestAccount(unittest.TestCase):
         self.assertEqual(new_account.address, account.address)
         self.assertEqual(new_account.phone_number, account.phone_number)
         self.assertEqual(new_account.date_joined, account.date_joined)
+
+    def test_deserialize_without_date_uses_today(self):
+        """It should default date_joined when it is omitted"""
+        account = Account()
+        account.deserialize(
+            {
+                "name": "Test Account",
+                "email": "test@example.com",
+                "address": "123 Main St.",
+                "phone_number": "555-1212",
+            }
+        )
+        self.assertIsNotNone(account.date_joined)
 
     def test_deserialize_with_key_error(self):
         """It should not Deserialize an account with a KeyError"""
