@@ -1,4 +1,6 @@
-# DevOps Capstone Template
+# devops-capstone-project
+
+Customer Accounts microservice developed for the IBM DevOps Capstone Project. The service exposes REST APIs for creating, reading, listing, updating, and deleting customer accounts.
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python 3.9](https://img.shields.io/badge/Python-3.9-green.svg)](https://shields.io/)
