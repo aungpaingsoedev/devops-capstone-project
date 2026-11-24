@@ -1,5 +1,7 @@
 # devops-capstone-project
 
+[![CI Build](https://github.com/aungpaingsoedev/devops-capstone-project/actions/workflows/ci-build.yaml/badge.svg)](https://github.com/aungpaingsoedev/devops-capstone-project/actions/workflows/ci-build.yaml)
+
 Customer Accounts microservice developed for the IBM DevOps Capstone Project. The service exposes REST APIs for creating, reading, listing, updating, and deleting customer accounts.
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
