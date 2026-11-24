@@ -79,6 +79,25 @@ class TestAccountService(TestCase):
         response = self.client.get("/")
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
+    def test_security_headers(self):
+        """It should return browser security headers."""
+        response = self.client.get("/")
+        self.assertEqual(response.headers["X-Content-Type-Options"], "nosniff")
+        self.assertEqual(response.headers["X-Frame-Options"], "SAMEORIGIN")
+        self.assertIn(
+            "default-src", response.headers["Content-Security-Policy"]
+        )
+
+    def test_cors(self):
+        """It should allow cross-origin API requests."""
+        response = self.client.get(
+            "/", headers={"Origin": "https://example.org"}
+        )
+        self.assertEqual(
+            response.headers["Access-Control-Allow-Origin"],
+            "https://example.org",
+        )
+
     def test_health(self):
         """It should be healthy"""
         resp = self.client.get("/health")
