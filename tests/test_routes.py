@@ -121,7 +121,8 @@ class TestAccountService(TestCase):
             json=account.serialize(),
             content_type="test/html"
         )
-        self.assertEqual(response.status_code, status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
+        self.assertEqual(response.status_code,
+                         status.HTTP_415_UNSUPPORTED_MEDIA_TYPE)
 
     def test_get_account(self):
         """It should Read a single Account"""
@@ -157,7 +158,8 @@ class TestAccountService(TestCase):
 
     def test_update_account_not_found(self):
         """It should not Update an Account that is not found"""
-        response = self.client.put(f"{BASE_URL}/0", json=AccountFactory().serialize())
+        response = self.client.put(
+            f"{BASE_URL}/0", json=AccountFactory().serialize())
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_delete_account(self):
@@ -169,4 +171,5 @@ class TestAccountService(TestCase):
     def test_method_not_allowed(self):
         """It should not allow an illegal method call"""
         response = self.client.delete(BASE_URL)
-        self.assertEqual(response.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+        self.assertEqual(response.status_code,
+                         status.HTTP_405_METHOD_NOT_ALLOWED)
