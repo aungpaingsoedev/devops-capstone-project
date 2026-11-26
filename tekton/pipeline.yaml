@@ -1,12 +1,6 @@
-#
-# This pipeline needs the following tasks from Tekton Catalog
-#   - git-clone
-#   - flake8
-#
----
 apiVersion: tekton.dev/v1beta1
 kind: Pipeline
-metadata:  
+metadata:
   name: cd-pipeline
 spec:
   workspaces:
@@ -16,23 +10,72 @@ spec:
     - name: branch
       default: main
   tasks:
-    - name: init
-      workspaces:
-        - name: source
-          workspace: pipeline-workspace          
-      taskRef:
-        name: cleanup
-
     - name: clone
       workspaces:
         - name: output
-          workspace: pipeline-workspace          
+          workspace: pipeline-workspace
       taskRef:
+        kind: ClusterTask
         name: git-clone
       params:
       - name: url
         value: $(params.repo-url)
       - name: revision
         value: $(params.branch)
-      runAfter:
-        - init
+      - name: deleteExisting
+        value: "true"
+    - name: lint-and-test
+      runAfter: [clone]
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
+      taskSpec:
+        workspaces:
+          - name: source
+        steps:
+          - name: validate
+            image: python:3.9-slim
+            workingDir: $(workspaces.source.path)
+            env:
+              - name: DATABASE_URI
+                value: sqlite:////tmp/accounts-tests.db
+              - name: HOME
+                value: /tmp
+              - name: PYTHONUSERBASE
+                value: /tmp/python-packages
+            script: |
+              #!/bin/sh
+              set -eu
+              python -m pip install --user --no-cache-dir -r requirements.txt
+              export PATH="/tmp/python-packages/bin:$PATH"
+              python -m flake8 service tests
+              nosetests --cover-min-percentage=95
+    - name: build
+      runAfter: [lint-and-test]
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
+      taskSpec:
+        workspaces:
+          - name: source
+        steps:
+          - name: build-image
+            image: image-registry.openshift-image-registry.svc:5000/openshift/cli:latest
+            workingDir: $(workspaces.source.path)
+            script: |
+              #!/bin/sh
+              set -eu
+              oc start-build accounts --from-dir=. --follow --wait
+    - name: deploy
+      runAfter: [build]
+      taskSpec:
+        steps:
+          - name: verify-rollout
+            image: image-registry.openshift-image-registry.svc:5000/openshift/cli:latest
+            script: |
+              #!/bin/sh
+              set -eu
+              oc rollout status deployment/accounts --timeout=300s
+              oc get deployment accounts
+              oc get pods -l deployment=accounts
+              oc logs deployment/accounts --tail=12
